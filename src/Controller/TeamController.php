@@ -150,7 +150,7 @@ class TeamController extends Controller
         $params = $this->getRequestData($request);
 
         // additional params
-        $this->requestParams['league_id'] = (int)$params['league_id'] ?? null;
+        $this->requestParams['league_id'] = $params['league_id'] ?? null;
         $this->requestParams['name'] = $params['name'] ?? null;
         $this->requestParams['strip'] = $params['strip'] ?? null;
     }
