@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\League;
+use App\Exception\ApiException;
 use App\Repository\LeagueRepository;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,10 +24,9 @@ class LeagueService
 
     /**
      * @param Request $request
-     * @param bool $returnCount
      * @return mixed
      */
-    public function getPaginationList(Request $request, $returnCount = false)
+    public function getPaginationList(Request $request)
     {
         $this->getRequestParams($request);
 
@@ -35,18 +35,28 @@ class LeagueService
          */
         $leagueRepository = $this->em->getRepository(League::class);
 
-        if ($returnCount) {
-            // find total count
-            return $leagueRepository->findCount();
-        }
-
         // find data
         return $leagueRepository->findBy([], null, $this->requestParams['limit'], $this->requestParams['offset']);
     }
 
     /**
+     * @return mixed
+     */
+    public function getPaginationCount()
+    {
+        /**
+         * @var $leagueRepository LeagueRepository
+         */
+        $leagueRepository = $this->em->getRepository(League::class);
+
+        // find total count
+        return $leagueRepository->findCount();
+    }
+
+    /**
      * @param $id
-     * @return bool|\Symfony\Component\HttpFoundation\JsonResponse
+     * @return bool
+     * @throws ApiException
      */
     public function delete($id)
     {
@@ -54,17 +64,18 @@ class LeagueService
 
         // find data
         $leagueEntity = $leagueRepository->find($id);
-
         if (empty($leagueEntity)) {
-            $this->error = ApiCodes::ERR_CODE_LEAGUE_NOT_FOUND;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
+            throw new ApiException(ApiCodes::ERR_CODE_LEAGUE_NOT_FOUND, Response::HTTP_BAD_REQUEST);
         }
 
-        $this->em->remove($leagueEntity);
-        $this->em->flush();
+        try {
+            $this->em->remove($leagueEntity);
+            $this->em->flush();
+        } catch (\Exception $e) {
+            throw new ApiException(ApiCodes::ERR_INTERNAL_SERVER_ERROR, Response::HTTP_INTERNAL_SERVER_ERROR);
+        };
 
         return true;
     }
-
 
 }

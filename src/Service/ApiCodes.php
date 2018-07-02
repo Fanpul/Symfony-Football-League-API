@@ -13,6 +13,7 @@ class ApiCodes
     const ERR_INVALID_CREDENTIALS = 3;
     const ERR_DATA_NOT_FOUND = 4;
     const ERR_REQUIRED_PARAM = 5;
+    const ERR_INTERNAL_SERVER_ERROR = 6;
 
     const ERR_ACCESS_TOKEN_INVALID = 10;
     const ERR_REFRESH_TOKEN_INVALID = 11;
@@ -29,6 +30,7 @@ class ApiCodes
         self::ERR_INVALID_CREDENTIALS => 'Invalid credentials',
         self::ERR_REQUIRED_PARAM => 'Required parameter',
         self::ERR_DATA_NOT_FOUND => 'Data with such params not found',
+        self::ERR_INTERNAL_SERVER_ERROR => 'Internal server error',
 
         self::ERR_ACCESS_TOKEN_INVALID => 'Invalid access token',
         self::ERR_REFRESH_TOKEN_INVALID => 'Invalid refresh token',

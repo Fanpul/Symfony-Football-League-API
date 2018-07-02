@@ -24,7 +24,7 @@ php bin/console doctrine:fixtures:load
  ***League***   
     
  ````      
-    GET http://YOUR_DOMAIN/v1/league
+    GET http://YOUR_DOMAIN/v1/leagues
     @params:
         limit: 10
         offset: 0
@@ -32,7 +32,7 @@ php bin/console doctrine:fixtures:load
         Authorization: Bearer <access_token>
  ````       
  ````    
-    DELETE http://YOUR_DOMAIN/v1/league/{id}
+    DELETE http://YOUR_DOMAIN/v1/leagues/{id}
     @params:
         *{id}: <league_id>
     @headers:
@@ -43,7 +43,7 @@ php bin/console doctrine:fixtures:load
 ***Team***   
      
 ````        
-    GET http://YOUR_DOMAIN/v1/team
+    GET http://YOUR_DOMAIN/v1/teams
     @params:
         league_id: <league_id>
         limit: 10
@@ -52,7 +52,7 @@ php bin/console doctrine:fixtures:load
         Authorization: Bearer <access_token>
  ````       
  ````    
-    POST http://YOUR_DOMAIN/v1/team
+    POST http://YOUR_DOMAIN/v1/teams
     @params:
         *name: <name>
         *strip: <strip>
@@ -61,7 +61,7 @@ php bin/console doctrine:fixtures:load
         Authorization: Bearer <access_token>
  ````       
  ````    
-    PUT http://YOUR_DOMAIN/v1/team/{id}
+    PUT http://YOUR_DOMAIN/v1/teams/{id}
     @params:
         *{id}: <team_id>
         name: <name>

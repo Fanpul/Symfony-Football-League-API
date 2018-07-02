@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Controller\Traits\ApiResponseTrait;
+use App\Exception\ApiException;
 use App\Service\ApiCodes;
+use App\Service\Validation\TeamValidation;
 
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +20,7 @@ class TeamController extends Controller
     }
 
     /**
-     * @Route("/v1/team", name="v1_team_browse")
+     * @Route("/v1/teams", name="v1_team_browse")
      * @Method({"GET"})
      *
      * @param Request $request
@@ -26,6 +28,7 @@ class TeamController extends Controller
      */
     public function browseAction(Request $request)
     {
+        // get limit, offset request params
         $this->getRequestParams($request);
 
         /**
@@ -37,7 +40,7 @@ class TeamController extends Controller
         $teamEntities = $teamService->getPaginationList($request);
 
         // find total count
-        $totalCount = $teamService->getPaginationList($request, true);
+        $totalCount = $teamService->getPaginationCount($request);
 
         if (!empty($teamEntities)) {
 
@@ -60,7 +63,7 @@ class TeamController extends Controller
     }
 
     /**
-     * @Route("/v1/team", name="v1_team_create")
+     * @Route("/v1/teams", name="v1_team_create")
      * @Method({"POST"})
      *
      * @param Request $request
@@ -70,17 +73,22 @@ class TeamController extends Controller
     {
         /**
          * @var $teamService \App\Service\TeamService
+         * @var $validation TeamValidation
          */
         $teamService = $this->get('team_service');
+        $validation = $this->get('validation.team_service');
 
-        $validate = $teamService->validateCreate($request);
-        if ($validate instanceof Response) {
-            return $validate;
+        // validate
+        $this->errorFields = $validation->validateCreate($request);
+        if (!empty($this->errorFields)) {
+            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
         }
 
-        $team = $teamService->create($request);
-        if ($team instanceof Response) {
-            return $team;
+        try {
+            $team = $teamService->create($request);
+        } catch(ApiException $e) {
+            $this->error = $e->getMessage();
+            return $this->responseJson([], $e->getCode());
         }
 
         // normalize entity
@@ -95,7 +103,7 @@ class TeamController extends Controller
     }
 
     /**
-     * @Route("/v1/team/{id}", name="v1_team_update")
+     * @Route("/v1/teams/{id}", name="v1_team_update")
      * @Method({"PUT"})
      *
      * @param $id
@@ -109,9 +117,11 @@ class TeamController extends Controller
          */
         $teamService = $this->get('team_service');
 
-        $team = $teamService->update($id, $request);
-        if ($team instanceof Response) {
-            return $team;
+        try {
+            $team = $teamService->update($id, $request);
+        } catch(ApiException $e) {
+            $this->error = $e->getMessage();
+            return $this->responseJson([], $e->getCode());
         }
 
         // normalize entity

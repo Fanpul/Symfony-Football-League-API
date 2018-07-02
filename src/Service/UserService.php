@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\User;
+use App\Exception\ApiException;
 use App\Repository\UserRepository;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -25,7 +26,7 @@ class UserService
 
     /**
      * @param User $user
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return array
      */
     public function login(User $user)
     {
@@ -38,40 +39,13 @@ class UserService
         $this->em->persist($user);
         $this->em->flush();
 
-        return $this->responseJson([
-            'access_token' => $token,
-            'refresh_token' => $user->getRefreshToken(),
-            'exp' => $this->jwtEncoder->getPayload($token, 'exp'),
-            'user' => [
-                'id' => $user->getId(),
-                'username' => $user->getUsername()
-            ]
-        ]);
+        return [$token, $refreshToken];
     }
 
     /**
      * @param Request $request
-     * @return bool|\Symfony\Component\HttpFoundation\JsonResponse
-     */
-    public function validateRefreshToken(Request $request)
-    {
-        $refreshToken = $request->get('refresh_token');
-
-        if (empty($refreshToken)) {
-            $this->errorFields['refresh_token'] = ApiCodes::ERR_REQUIRED_PARAM;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (!$this->jwtEncoder->validateRefreshToken($refreshToken)) {
-            $this->error = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-        return true;
-    }
-
-    /**
-     * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return array
+     * @throws ApiException
      */
     public function refreshToken(Request $request)
     {
@@ -86,13 +60,11 @@ class UserService
 
         $user = $userRepository->loadUserByJwt($currentToken);
         if (empty($user)) {
-            $this->error = ApiCodes::ERR_ACCESS_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
+            throw new ApiException(ApiCodes::ERR_ACCESS_TOKEN_INVALID, Response::HTTP_BAD_REQUEST);
         }
 
         if ($refreshToken != $user->getRefreshToken()) {
-            $this->error = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
+            throw new ApiException(ApiCodes::ERR_REFRESH_TOKEN_INVALID, Response::HTTP_BAD_REQUEST);
         }
 
         $token = $this->jwtEncoder->getJWT(['jti' => $user->getId()]);
@@ -104,16 +76,7 @@ class UserService
         $this->em->persist($user);
         $this->em->flush();
 
-        return $this->responseJson([
-            'access_token' => $token,
-            'refresh_token' => $user->getRefreshToken(),
-            'exp' => $this->jwtEncoder->getPayload($token, 'exp'),
-            'user' => [
-                'id' => $user->getId(),
-                'username' => $user->getUsername()
-            ]
-        ]);
+        return [$user, $token, $refreshToken];
     }
-
 
 }

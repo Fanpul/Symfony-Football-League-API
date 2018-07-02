@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 
 use App\Service\ApiCodes;
+use App\Exception\ApiException;
 use App\Controller\Traits\ApiResponseTrait;
 
 class LeagueController extends Controller
@@ -16,7 +17,7 @@ class LeagueController extends Controller
     use ApiResponseTrait;
 
     /**
-     * @Route("/v1/league", name="v1_league_browse")
+     * @Route("/v1/leagues", name="v1_league_browse")
      * @Method({"GET"})
      *
      * @param Request $request
@@ -36,7 +37,7 @@ class LeagueController extends Controller
         $leagueEntities = $leagueService->getPaginationList($request);
 
         // find total count
-        $totalCount = $leagueService->getPaginationList($request, true);
+        $totalCount = $leagueService->getPaginationCount();
 
         if (!empty($leagueEntities)) {
 
@@ -59,7 +60,7 @@ class LeagueController extends Controller
     }
 
     /**
-     * @Route("/v1/league/{id}", name="v1_league_delete")
+     * @Route("/v1/leagues/{id}", name="v1_league_delete")
      * @Method({"DELETE"})
      *
      * @param $id
@@ -73,10 +74,11 @@ class LeagueController extends Controller
          */
         $leagueService = $this->get('league_service');
 
-        $response = $leagueService->delete($id);
-
-        if ($response instanceof Response) {
-            return $response;
+        try {
+            $leagueService->delete($id);
+        } catch(ApiException $e) {
+            $this->error = $e->getMessage();
+            return $this->responseJson([], $e->getCode());
         }
 
         return $this->responseJson( [

@@ -58,7 +58,7 @@ services:
     user_service:
         class: App\Service\UserService
         public: true
-        arguments: ['@doctrine.orm.entity_manager', '@jwt_encoder',]
+        arguments: ['@doctrine.orm.entity_manager', '@jwt_encoder']
 
     team_service:
         class: App\Service\TeamService
@@ -69,3 +69,12 @@ services:
         class: App\Service\LeagueService
         public: true
         arguments: ['@doctrine.orm.entity_manager']
+
+    validation.user_service:
+        class: App\Service\Validation\UserValidation
+        public: true
+        arguments: ['@jwt_encoder']
+
+    validation.team_service:
+        class: App\Service\Validation\TeamValidation
+        public: true
