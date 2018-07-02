@@ -13,4 +13,3 @@ symfony.lock
 .phpunit
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
-.idea
