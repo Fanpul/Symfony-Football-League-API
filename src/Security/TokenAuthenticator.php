@@ -2,21 +2,20 @@
 
 namespace App\Security;
 
+use App\Controller\Traits\ApiResponseTrait;
+use App\Entity\User;
+use App\Repository\UserRepository;
+use App\Service\ApiCodes;
+use App\Service\JwtEncoder;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
-
-use App\Entity\User;
-use App\Repository\UserRepository;
-use App\Controller\Traits\ApiResponseTrait;
-use App\Service\JwtEncoder;
-use App\Service\ApiCodes;
+use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 
 /**
  * Class TokenAuthenticator
@@ -134,6 +133,9 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
         return $this->responseJson([], Response::HTTP_UNAUTHORIZED);
     }
 
+    /**
+     * @return bool
+     */
     public function supportsRememberMe()
     {
         return false;

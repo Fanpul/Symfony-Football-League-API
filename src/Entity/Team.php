@@ -41,41 +41,65 @@ class Team
      */
     private $league;
 
+    /**
+     * @return mixed
+     */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * @return null|string
+     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    public function setName(string $name): self
+    /**
+     * @param string|null $name
+     * @return Team
+     */
+    public function setName(string $name = null): self
     {
         $this->name = $name;
 
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getStrip(): ?string
     {
         return $this->strip;
     }
 
-    public function setStrip(string $strip): self
+    /**
+     * @param string|null $strip
+     * @return Team
+     */
+    public function setStrip(string $strip = null): self
     {
         $this->strip = $strip;
 
         return $this;
     }
 
+    /**
+     * @return League|null
+     */
     public function getLeague(): ?League
     {
         return $this->league;
     }
 
-    public function setLeague(?League $league): self
+    /**
+     * @param League|null $league
+     * @return Team
+     */
+    public function setLeague(?League $league = null): self
     {
         $this->league = $league;
 

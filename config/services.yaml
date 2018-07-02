@@ -3,9 +3,9 @@
 parameters:
     locale: 'en'
     secretJWT: '%env(APP_SECRET)%'
-    algorithmJWT: 'HS256'
-    tokenExpireDays: 1
-    refreshTokenExpireDays: 30
+    algorithmJWT: '%env(algorithmJWT)%'
+    tokenExpireDays: '%env(tokenExpireDays)%'
+    refreshTokenExpireDays: '%env(refreshTokenExpireDays)%'
 
 services:
     # default configuration for services in *this* file
@@ -40,8 +40,8 @@ services:
         class: App\Security\TokenAuthenticator
         arguments: ['@jwt_encoder', '@doctrine.orm.entity_manager']
 
-    form_authenticator:
-        class: App\Security\FormAuthenticator
+    guard_authenticator:
+        class: App\Security\GuardAuthenticator
         arguments: ['@security.password_encoder']
 
     get_set_method_normalizer:

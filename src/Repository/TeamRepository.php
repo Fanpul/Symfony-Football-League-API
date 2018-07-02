@@ -32,13 +32,11 @@ class TeamRepository extends ServiceEntityRepository
 
         // filter by league_id
         if (!empty($criteria['league_id'])) {
-            $qb
-                ->andWhere('l.id = :league_id')
+            $qb->andWhere('l.id = :league_id')
                 ->setParameter('league_id', $criteria['league_id']);
         }
 
-        $qb
-            ->setMaxResults($limit)
+        $qb->setMaxResults($limit)
             ->setFirstResult($offset);
 
         return $qb->getQuery()->getResult();
@@ -55,8 +53,7 @@ class TeamRepository extends ServiceEntityRepository
 
         // filter by league_id
         if (!empty($criteria['league_id'])) {
-            $qb
-                ->andWhere('l.id = :league_id')
+            $qb->andWhere('l.id = :league_id')
                 ->setParameter('league_id', $criteria['league_id']);
         }
 

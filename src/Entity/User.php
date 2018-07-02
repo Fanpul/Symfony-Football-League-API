@@ -45,22 +45,34 @@ class User implements UserInterface
      */
     private $roles;
 
+    /**
+     * User constructor.
+     */
     public function __construct()
     {
         $this->roles = array();
     }
 
+    /**
+     * @return mixed
+     */
     public function getId()
     {
         return $this->id;
     }
-    
 
+    /**
+     * @return null|string
+     */
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
+    /**
+     * @param string $password
+     * @return User
+     */
     public function setPassword(string $password): self
     {
         $this->password = $password;
@@ -68,11 +80,18 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getAuthKey(): ?string
     {
         return $this->auth_key;
     }
 
+    /**
+     * @param null|string $auth_key
+     * @return User
+     */
     public function setAuthKey(?string $auth_key): self
     {
         $this->auth_key = sha1($auth_key);
@@ -80,11 +99,18 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getRefreshToken(): ?string
     {
         return $this->refresh_token;
     }
 
+    /**
+     * @param null|string $refresh_token
+     * @return User
+     */
     public function setRefreshToken(?string $refresh_token): self
     {
         $this->refresh_token = $refresh_token;
@@ -92,6 +118,10 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @param $role
+     * @return $this
+     */
     public function addRole($role)
     {
         $role = strtoupper($role);
@@ -106,6 +136,9 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getRoles()
     {
         $roles = $this->roles;

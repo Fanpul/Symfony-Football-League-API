@@ -2,19 +2,15 @@
 
 namespace App\Service;
 
-use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\User;
 use App\Exception\ApiException;
 use App\Repository\UserRepository;
-
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class UserService
 {
-    use ApiResponseTrait;
-
     private $em = null;
     private $jwtEncoder = null;
 
@@ -43,15 +39,14 @@ class UserService
     }
 
     /**
-     * @param Request $request
+     * @param $params
      * @return array
      * @throws ApiException
      */
-    public function refreshToken(Request $request)
+    public function refreshToken($params)
     {
-        $refreshToken = $request->get('refresh_token');
-
-        $currentToken = $this->jwtEncoder->getCleanBearerToken($request);
+        $refreshToken = $params['refresh_token'] ?? null;
+        $currentToken = $params['access_token'] ?? null;
 
         /**
          * @var $userRepository UserRepository

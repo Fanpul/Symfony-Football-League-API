@@ -5,13 +5,18 @@ namespace App\Service\Validation;
 use App\Service\ApiCodes;
 use App\Service\JwtEncoder;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validation;
 
-class UserValidation
+class UserValidation implements ValidationInterface
 {
     protected $jwtEncoder = null;
+    protected $errorFields = [];
 
+    /**
+     * UserValidation constructor.
+     * @param JwtEncoder $jwtEncoder
+     */
     public function __construct(JwtEncoder $jwtEncoder)
     {
         $this->jwtEncoder = $jwtEncoder;
@@ -19,7 +24,7 @@ class UserValidation
 
     /**
      * @param Request $request
-     * @return array
+     * @return bool
      */
     public function validateRefreshToken(Request $request)
     {
@@ -33,20 +38,28 @@ class UserValidation
             'refresh_token' => $request->get('refresh_token'),
         ], $constraint);
 
-        $errors = [];
-        if (!empty($violations)) {
+        if ($violations->count() > 0) {
             foreach ($violations as $violation) {
                 $field = str_replace(['[', ']'], '', $violation->getPropertyPath());
-                $errors[$field] = ApiCodes::ERR_REQUIRED_PARAM;
+                $this->errorFields[$field] = ApiCodes::ERR_REQUIRED_PARAM;
             }
-            return $errors;
+            return false;
         }
 
         // check expired time
         if (!$this->jwtEncoder->validateRefreshToken($request->get('refresh_token'))) {
-            $errors['refresh_token'] = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
+            $this->errorFields['refresh_token'] = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
+            return false;
         }
 
-        return $errors;
+        return true;
     }
+    /**
+     * @return array
+     */
+    public function getErrorFields()
+    {
+        return $this->errorFields;
+    }
+
 }

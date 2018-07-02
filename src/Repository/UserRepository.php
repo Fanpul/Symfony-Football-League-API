@@ -25,13 +25,7 @@ class UserRepository extends ServiceEntityRepository
      */
     public function loadUserByUsername($username)
     {
-        $user = $this->findOneBy(['username' => $username]);
-
-        if (!$user instanceof User) {
-            return null;
-        }
-
-        return $user;
+        return $this->findOneBy(['username' => $username]);
     }
 
     /**
@@ -40,13 +34,7 @@ class UserRepository extends ServiceEntityRepository
      */
     public function loadUserByAuthKey($authKey)
     {
-        $user = $this->findOneBy(['auth_key' => $authKey]);
-
-        if (!$user instanceof User) {
-            return null;
-        }
-
-        return $user;
+        return $this->findOneBy(['auth_key' => $authKey]);
     }
 
     /**

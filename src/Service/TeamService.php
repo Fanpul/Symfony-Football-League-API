@@ -2,24 +2,17 @@
 
 namespace App\Service;
 
-use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\League;
 use App\Entity\Team;
 use App\Exception\ApiException;
 use App\Repository\LeagueRepository;
 use App\Repository\TeamRepository;
-
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class TeamService
 {
-    use ApiResponseTrait {
-        getRequestParams as _getRequestParams;
-    }
-
     private $em = null;
 
     public function __construct(EntityManagerInterface $em)
@@ -28,16 +21,15 @@ class TeamService
     }
 
     /**
-     * @param Request $request
-     * @return mixed
+     * @param $params
+     * @return array
+     * @throws ApiException
      */
-    public function getPaginationList(Request $request)
+    public function getPaginationData($params)
     {
-        $this->getRequestParams($request);
-
         $conditions = [];
-        if (!empty($this->requestParams['league_id'])) {
-            $conditions['league_id'] = $this->requestParams['league_id'];
+        if (!empty($params['league_id'])) {
+            $conditions['league_id'] = $params['league_id'];
         }
 
         /**
@@ -46,37 +38,24 @@ class TeamService
         $teamRepository = $this->em->getRepository(Team::class);
 
         // find data
-        return $teamRepository->findByCriteria($conditions, $this->requestParams['limit'], $this->requestParams['offset']);
-    }
+        $teamEntities = $teamRepository->findByCriteria($conditions, $params['limit'], $params['offset']);
 
-    /**
-     * @param Request $request
-     * @return mixed
-     */
-    public function getPaginationCount(Request $request)
-    {
-        $this->getRequestParams($request);
-
-        $conditions = [];
-        if (!empty($this->requestParams['league_id'])) {
-            $conditions['league_id'] = $this->requestParams['league_id'];
+        if (empty($teamEntities)) {
+            throw new ApiException(ApiCodes::ERR_DATA_NOT_FOUND, Response::HTTP_NOT_FOUND);
         }
 
-        /**
-         * @var $teamRepository TeamRepository
-         */
-        $teamRepository = $this->em->getRepository(Team::class);
-
         // find total count
-        return $teamRepository->findCountByCriteria($conditions);
+        $totalCount = $teamRepository->findCountByCriteria($conditions);
+
+        return [$teamEntities, $totalCount];
     }
 
     /**
-     * @param Request $request
+     * @param $params
      * @return Team
      * @throws ApiException
      */
-    public function create(Request $request)
+    public function create($params)
     {
         /**
          * @var $leagueRepository LeagueRepository
@@ -84,85 +63,69 @@ class TeamService
         $leagueRepository = $this->em->getRepository(League::class);
 
         // find league
-        $league = $leagueRepository->find($request->get('league_id'));
+        $league = $leagueRepository->find($params['league_id']);
         if (empty($league)) {
             throw new ApiException(ApiCodes::ERR_CODE_LEAGUE_NOT_FOUND, Response::HTTP_BAD_REQUEST);
         }
 
         // create team
         $team = new Team();
-        $team->setName($request->get('name'));
-        $team->setStrip($request->get('strip'));
+        $team->setName($params['name']);
+        $team->setStrip($params['strip']);
         $team->setLeague($league);
 
         try {
             $this->em->persist($team);
             $this->em->flush();
+
+            return $team;
         } catch (UniqueConstraintViolationException $e) {
             throw new ApiException(ApiCodes::ERR_CODE_TEAM_DUPLICATE_NAME, Response::HTTP_BAD_REQUEST);
         }
-
-        return $team;
     }
 
     /**
      * @param $id
-     * @param Request $request
+     * @param $params
      * @return Team|null
      * @throws ApiException
      */
-    public function update($id, Request $request)
+    public function update($id, $params)
     {
-        /**
-         * @var $teamRepository TeamRepository
-         */
+        /** @var $teamRepository TeamRepository */
         $teamRepository = $this->em->getRepository(Team::class);
 
         $teamEntity = $teamRepository->find($id);
-
         if (empty($teamEntity)) {
-            throw new ApiException(ApiCodes::ERR_CODE_TEAM_NOT_FOUND, Response::HTTP_BAD_REQUEST);
+            throw new ApiException(ApiCodes::ERR_CODE_TEAM_NOT_FOUND, Response::HTTP_NOT_FOUND);
         }
 
-        $changed = false;
-        if (!empty($request->get('name'))) {
-            $teamEntity->setName($request->get('name'));
-            $changed = true;
+        if (!empty($params['name'])) {
+            $teamEntity->setName($params['name']);
         }
-        if (!empty($request->get('strip'))) {
-            $teamEntity->setStrip($request->get('strip'));
-            $changed = true;
+        if (!empty($params['strip'])) {
+            $teamEntity->setStrip($params['strip']);
         }
-        if (!empty($request->get('league_id'))) {
-            /**
-             * @var $leagueRepository LeagueRepository
-             */
+        if (!empty($params['league_id'])) {
+            /** @var $leagueRepository LeagueRepository */
             $leagueRepository = $this->em->getRepository(League::class);
 
             // find league
-            $league = $leagueRepository->find($request->get('league_id'));
+            $league = $leagueRepository->find($params['league_id']);
             if (empty($league)) {
                 throw new ApiException(ApiCodes::ERR_CODE_LEAGUE_NOT_FOUND, Response::HTTP_BAD_REQUEST);
             }
-
             $teamEntity->setLeague($league);
-            $changed = true;
         }
 
-        // if need to change fields
-        if (!empty($changed)) {
-
-            try {
-                $this->em->persist($teamEntity);
-                $this->em->flush();
-            } catch (UniqueConstraintViolationException $e) {
-                throw new ApiException(ApiCodes::ERR_CODE_TEAM_DUPLICATE_NAME, Response::HTTP_BAD_REQUEST);
-            }
+        try {
+            $this->em->persist($teamEntity);
+            $this->em->flush();
 
             return $teamEntity;
+        } catch (UniqueConstraintViolationException $e) {
+            throw new ApiException(ApiCodes::ERR_CODE_TEAM_DUPLICATE_NAME, Response::HTTP_BAD_REQUEST);
         }
-
-        throw new ApiException(ApiCodes::ERR_CODE_TEAM_NOT_MODIFIED, Response::HTTP_BAD_REQUEST);
     }
 
 }

@@ -2,15 +2,12 @@
 
 namespace App\Controller;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-
-use App\Service\ApiCodes;
-use App\Exception\ApiException;
 use App\Controller\Traits\ApiResponseTrait;
+use App\Exception\ApiException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class LeagueController extends Controller
 {
@@ -23,7 +20,7 @@ class LeagueController extends Controller
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function browseAction(Request $request)
+    public function indexAction(Request $request)
     {
         // params with limit, offset
         $this->getRequestParams($request);
@@ -34,12 +31,8 @@ class LeagueController extends Controller
         $leagueService = $this->get('league_service');
 
         // find data
-        $leagueEntities = $leagueService->getPaginationList($request);
-
-        // find total count
-        $totalCount = $leagueService->getPaginationCount();
-
-        if (!empty($leagueEntities)) {
+        try {
+            [$leagueEntities, $totalCount] = $leagueService->getPaginationData($this->requestParams);
 
             // normalize entity
             $data = $this->normalize($leagueEntities, [
@@ -53,10 +46,10 @@ class LeagueController extends Controller
                 'offset' => $this->requestParams['offset'],
                 'data' => $data
             ]);
+        } catch (ApiException $e) {
+            $this->error = $e->getMessage();
+            return $this->responseJson([], $e->getCode());
         }
-
-        $this->error = ApiCodes::ERR_DATA_NOT_FOUND;
-        return $this->responseJson([], Response::HTTP_NOT_FOUND);
     }
 
     /**

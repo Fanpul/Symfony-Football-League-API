@@ -6,12 +6,11 @@ use App\Controller\Traits\ApiResponseTrait;
 use App\Exception\ApiException;
 use App\Service\ApiCodes;
 use App\Service\Validation\TeamValidation;
-
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 class TeamController extends Controller
 {
@@ -26,7 +25,7 @@ class TeamController extends Controller
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function browseAction(Request $request)
+    public function indexAction(Request $request)
     {
         // get limit, offset request params
         $this->getRequestParams($request);
@@ -37,12 +36,10 @@ class TeamController extends Controller
         $teamService = $this->get('team_service');
 
         // find data
-        $teamEntities = $teamService->getPaginationList($request);
+//        $teamEntities = $teamService->getPaginationList($request);
 
-        // find total count
-        $totalCount = $teamService->getPaginationCount($request);
-
-        if (!empty($teamEntities)) {
+        try {
+            [$teamEntities, $totalCount] = $teamService->getPaginationData($this->requestParams);
 
             // normalize entity
             $data = $this->normalize($teamEntities, [
@@ -56,10 +53,11 @@ class TeamController extends Controller
                 'offset' => $this->requestParams['offset'],
                 'data' => $data
             ]);
-        }
 
-        $this->error = ApiCodes::ERR_DATA_NOT_FOUND;
-        return $this->responseJson([], Response::HTTP_NOT_FOUND);
+        } catch (ApiException $e) {
+            $this->error = $e->getMessage();
+            return $this->responseJson([], $e->getCode());
+        }
     }
 
     /**
@@ -78,28 +76,31 @@ class TeamController extends Controller
         $teamService = $this->get('team_service');
         $validation = $this->get('validation.team_service');
 
-        // validate
-        $this->errorFields = $validation->validateCreate($request);
-        if (!empty($this->errorFields)) {
+        // validate fields
+        if (!$validation->validateCreate($request)) {
+            $this->errorFields = $validation->getErrorFields();
             return $this->responseJson([], Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            $team = $teamService->create($request);
-        } catch(ApiException $e) {
+            $this->getRequestParams($request);
+
+            $team = $teamService->create($this->requestParams);
+
+            // normalize entity
+            $data = $this->normalize($team, [
+                'groups' => ['users']
+            ]);
+
+            return $this->responseJson([
+                'message' => 'Team was successfully created',
+                'data' => $data
+            ], Response::HTTP_CREATED);
+
+        } catch (ApiException $e) {
             $this->error = $e->getMessage();
             return $this->responseJson([], $e->getCode());
         }
-
-        // normalize entity
-        $data = $this->normalize($team, [
-            'groups' => ['users']
-        ]);
-
-        return $this->responseJson([
-            'message' => 'Team was successfully created',
-            'data' => $data
-        ], Response::HTTP_CREATED);
     }
 
     /**
@@ -117,21 +118,43 @@ class TeamController extends Controller
          */
         $teamService = $this->get('team_service');
 
+        $params = [
+            'name' => $request->get('name'),
+            'strip' => $request->get('strip'),
+            'league_id' => $request->get('league_id'),
+        ];
+
         try {
-            $team = $teamService->update($id, $request);
-        } catch(ApiException $e) {
+            $team = $teamService->update($id, $params);
+
+            // normalize entity
+            $data = $this->normalize($team, [
+                'groups' => ['users']
+            ]);
+
+            return $this->responseJson([
+                'message' => 'Team was successfully updated',
+                'data' => $data
+            ]);
+
+        } catch (ApiException $e) {
             $this->error = $e->getMessage();
             return $this->responseJson([], $e->getCode());
         }
+    }
 
-        // normalize entity
-        $data = $this->normalize($team, [
-            'groups' => ['users']
-        ]);
+    /**
+     * get control request params
+     * @param Request $request
+     */
+    protected function getRequestParams(Request $request)
+    {
+        $this->_getRequestParams($request);
+        $params = $this->getRequestData($request);
 
-        return $this->responseJson([
-            'message' => 'Team was successfully updated',
-            'data' => $data
-        ]);
+        // additional params
+        $this->requestParams['league_id'] = (int)$params['league_id'] ?? null;
+        $this->requestParams['name'] = $params['name'] ?? null;
+        $this->requestParams['strip'] = $params['strip'] ?? null;
     }
 }

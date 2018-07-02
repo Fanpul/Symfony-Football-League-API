@@ -21,8 +21,7 @@ class ApiCodes
     const ERR_CODE_LEAGUE_NOT_FOUND = 20;
 
     const ERR_CODE_TEAM_NOT_FOUND = 30;
-    const ERR_CODE_TEAM_NOT_MODIFIED = 31;
-    const ERR_CODE_TEAM_DUPLICATE_NAME = 32;
+    const ERR_CODE_TEAM_DUPLICATE_NAME = 31;
 
     private static $errorMessages = [
         self::ERR_UNAUTHORIZED => 'Unauthorized access',
@@ -37,7 +36,6 @@ class ApiCodes
 
         self::ERR_CODE_LEAGUE_NOT_FOUND => 'League not found',
         self::ERR_CODE_TEAM_NOT_FOUND => 'Team not found',
-        self::ERR_CODE_TEAM_NOT_MODIFIED => 'Team was not modified',
         self::ERR_CODE_TEAM_DUPLICATE_NAME => 'Team with such name already exists',
     ];
 

@@ -22,7 +22,7 @@ security:
             provider: db_provider
             guard:
                 authenticators:
-                    - 'form_authenticator'
+                    - 'guard_authenticator'
         main:
             anonymous: ~
             provider: db_provider
@@ -30,16 +30,7 @@ security:
                 authenticators:
                     - 'token_authenticator'
 
-            # activate different ways to authenticate
-
-            # http_basic: true
-            # https://symfony.com/doc/current/security.html#a-configuring-how-your-users-will-authenticate
-
-            # form_login: true
-            # https://symfony.com/doc/current/security/form_login_setup.html
-
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-#         - { path: ^/v1/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/, roles: ROLE_USER }

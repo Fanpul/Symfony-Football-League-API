@@ -74,7 +74,7 @@ class JwtEncoder
     public function generateRefreshToken()
     {
         $expiredTime = time() + $this->getRefreshTokenExpire();
-        return base64_encode(md5(time()) . md5(rand(1000, 9999)) . '_'. $expiredTime);
+        return base64_encode(md5(time()) . md5(rand(1000, 9999)) . '_' . $expiredTime);
     }
 
     /**

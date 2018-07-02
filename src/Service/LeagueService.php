@@ -2,19 +2,14 @@
 
 namespace App\Service;
 
-use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\League;
 use App\Exception\ApiException;
 use App\Repository\LeagueRepository;
-
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class LeagueService
 {
-    use ApiResponseTrait;
-
     private $em = null;
 
     public function __construct(EntityManagerInterface $em)
@@ -23,34 +18,28 @@ class LeagueService
     }
 
     /**
-     * @param Request $request
-     * @return mixed
+     * @param $params
+     * @return array
+     * @throws ApiException
      */
-    public function getPaginationList(Request $request)
+    public function getPaginationData($params)
     {
-        $this->getRequestParams($request);
-
         /**
          * @var $leagueRepository LeagueRepository
          */
         $leagueRepository = $this->em->getRepository(League::class);
 
         // find data
-        return $leagueRepository->findBy([], null, $this->requestParams['limit'], $this->requestParams['offset']);
-    }
+        $leagueEntities = $leagueRepository->findBy([], null, $params['limit'], $params['offset']);
 
-    /**
-     * @return mixed
-     */
-    public function getPaginationCount()
-    {
-        /**
-         * @var $leagueRepository LeagueRepository
-         */
-        $leagueRepository = $this->em->getRepository(League::class);
+        if (empty($leagueEntities)) {
+            throw new ApiException(ApiCodes::ERR_DATA_NOT_FOUND, Response::HTTP_NOT_FOUND);
+        }
 
         // find total count
-        return $leagueRepository->findCount();
+        $totalCount = $leagueRepository->findCount();
+
+        return [$leagueEntities, $totalCount];
     }
 
     /**

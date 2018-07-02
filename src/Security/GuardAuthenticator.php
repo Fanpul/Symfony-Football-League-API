@@ -2,23 +2,22 @@
 
 namespace App\Security;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
-
 use App\Controller\Traits\ApiResponseTrait;
 use App\Service\ApiCodes;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 
 /**
- * Class FormAuthenticator
+ * Class GuardAuthenticator
  * @package App\Security
  */
-class FormAuthenticator extends AbstractGuardAuthenticator
+class GuardAuthenticator extends AbstractGuardAuthenticator
 {
     use ApiResponseTrait;
 
@@ -42,6 +41,8 @@ class FormAuthenticator extends AbstractGuardAuthenticator
     /**
      * Called on every request. Return whatever credentials you want to
      * be passed to getUser() as $credentials.
+     * @param Request $request
+     * @return array
      */
     public function getCredentials(Request $request)
     {
@@ -68,6 +69,11 @@ class FormAuthenticator extends AbstractGuardAuthenticator
         return $userProvider->loadUserByUsername($username);
     }
 
+    /**
+     * @param mixed $credentials
+     * @param UserInterface $user
+     * @return bool
+     */
     public function checkCredentials($credentials, UserInterface $user)
     {
         $passwordPlain = $credentials['password'] ?? null;
@@ -85,12 +91,23 @@ class FormAuthenticator extends AbstractGuardAuthenticator
         return true;
     }
 
+    /**
+     * @param Request $request
+     * @param TokenInterface $token
+     * @param string $providerKey
+     * @return null
+     */
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
         // on success, let the request continue
         return null;
     }
 
+    /**
+     * @param Request $request
+     * @param AuthenticationException $exception
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
         $this->error = ApiCodes::ERR_INVALID_CREDENTIALS;
@@ -99,6 +116,9 @@ class FormAuthenticator extends AbstractGuardAuthenticator
 
     /**
      * Called when authentication is needed, but it's not sent
+     * @param Request $request
+     * @param AuthenticationException|null $authException
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
@@ -106,6 +126,9 @@ class FormAuthenticator extends AbstractGuardAuthenticator
         return $this->responseJson([], Response::HTTP_UNAUTHORIZED);
     }
 
+    /**
+     * @return bool
+     */
     public function supportsRememberMe()
     {
         return false;

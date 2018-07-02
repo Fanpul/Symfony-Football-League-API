@@ -34,21 +34,34 @@ class League
      */
     private $teams;
 
+    /**
+     * League constructor.
+     */
     public function __construct()
     {
         $this->teams = new ArrayCollection();
     }
 
+    /**
+     * @return mixed
+     */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * @return null|string
+     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
+    /**
+     * @param string $name
+     * @return League
+     */
     public function setName(string $name): self
     {
         $this->name = $name;
@@ -64,6 +77,10 @@ class League
         return $this->teams;
     }
 
+    /**
+     * @param Team $team
+     * @return League
+     */
     public function addTeam(Team $team): self
     {
         if (!$this->teams->contains($team)) {
@@ -74,6 +91,10 @@ class League
         return $this;
     }
 
+    /**
+     * @param Team $team
+     * @return League
+     */
     public function removeTeam(Team $team): self
     {
         if ($this->teams->contains($team)) {
