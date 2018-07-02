@@ -36,7 +36,7 @@ class FormAuthenticator extends AbstractGuardAuthenticator
      */
     public function supports(Request $request)
     {
-        return $request->headers->has('Authorization');
+        return true;
     }
 
     /**
