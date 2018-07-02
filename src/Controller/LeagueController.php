@@ -2,14 +2,12 @@
 
 namespace App\Controller;
 
-use App\Repository\LeagueRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 
-use App\Entity\League;
 use App\Service\ApiCodes;
 use App\Controller\Traits\ApiResponseTrait;
 
@@ -24,22 +22,21 @@ class LeagueController extends Controller
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function browse(Request $request)
+    public function browseAction(Request $request)
     {
+        // params with limit, offset
         $this->getRequestParams($request);
 
-        $em = $this->getDoctrine()->getManager();
-
         /**
-         * @var $leagueRepository LeagueRepository
+         * @var $leagueService \App\Service\LeagueService
          */
-        $leagueRepository = $em->getRepository(League::class);
+        $leagueService = $this->get('league_service');
 
         // find data
-        $leagueEntities = $leagueRepository->findBy([], null, $this->requestParams['limit'], $this->requestParams['offset']);
+        $leagueEntities = $leagueService->getPaginationList($request);
 
         // find total count
-        $totalCount = $leagueRepository->findCount();
+        $totalCount = $leagueService->getPaginationList($request, true);
 
         if (!empty($leagueEntities)) {
 
@@ -55,10 +52,10 @@ class LeagueController extends Controller
                 'offset' => $this->requestParams['offset'],
                 'data' => $data
             ]);
-        } else {
-            $this->error = ApiCodes::ERR_DATA_NOT_FOUND;
-            return $this->responseJson([], Response::HTTP_NOT_FOUND);
         }
+
+        $this->error = ApiCodes::ERR_DATA_NOT_FOUND;
+        return $this->responseJson([], Response::HTTP_NOT_FOUND);
     }
 
     /**
@@ -69,24 +66,18 @@ class LeagueController extends Controller
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function delete($id, Request $request)
+    public function deleteAction($id, Request $request)
     {
         /**
-         * @var $leagueRepository LeagueRepository
+         * @var $leagueService \App\Service\LeagueService
          */
-        $em = $this->getDoctrine()->getManager();
-        $leagueRepository = $em->getRepository(League::class);
+        $leagueService = $this->get('league_service');
 
-        // find data
-        $leagueEntity = $leagueRepository->find($id);
+        $response = $leagueService->delete($id);
 
-        if (empty($leagueEntity)) {
-            $this->error = ApiCodes::ERR_CODE_LEAGUE_NOT_FOUND;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
+        if ($response instanceof Response) {
+            return $response;
         }
-
-        $em->remove($leagueEntity);
-        $em->flush();
 
         return $this->responseJson( [
             'message' => 'League was successfully deleted'

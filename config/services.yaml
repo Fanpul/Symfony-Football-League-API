@@ -54,3 +54,18 @@ services:
         arguments: []
         tags:
             - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+    user_service:
+        class: App\Service\UserService
+        public: true
+        arguments: ['@doctrine.orm.entity_manager', '@jwt_encoder',]
+
+    team_service:
+        class: App\Service\TeamService
+        public: true
+        arguments: ['@doctrine.orm.entity_manager']
+
+    league_service:
+        class: App\Service\LeagueService
+        public: true
+        arguments: ['@doctrine.orm.entity_manager']

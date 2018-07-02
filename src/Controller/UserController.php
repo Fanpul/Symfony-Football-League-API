@@ -10,9 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use App\Entity\User;
-use App\Repository\UserRepository;
-use App\Service\ApiCodes;
-use App\Service\jwtEncoder;
 use App\Controller\Traits\ApiResponseTrait;
 
 class UserController extends Controller
@@ -26,7 +23,7 @@ class UserController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function login(Request $request)
+    public function loginAction(Request $request)
     {
         /**
          * @var $user User
@@ -34,29 +31,11 @@ class UserController extends Controller
         $user = $this->getUser();
 
         /**
-         * @var $jwtEncoder jwtEncoder
+         * @var $userService \App\Service\UserService
          */
-        $jwtEncoder = $this->get('jwt_encoder');
+        $userService = $this->get('user_service');
 
-        $token = $jwtEncoder->getJWT(['jti' => $user->getId()]);
-        $refreshToken = $jwtEncoder->generateRefreshToken();
-
-        $user->setAuthKey($token);
-        $user->setRefreshToken($refreshToken);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
-
-        return $this->responseJson([
-            'access_token' => $token,
-            'refresh_token' => $user->getRefreshToken(),
-            'exp' => $jwtEncoder->getPayload($token, 'exp'),
-            'user' => [
-                'id' => $user->getId(),
-                'username' => $user->getUsername()
-            ]
-        ]);
+        return $userService->login($user);
     }
 
     /**
@@ -66,63 +45,20 @@ class UserController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function refreshToken(Request $request)
+    public function refreshTokenAction(Request $request)
     {
-        $refreshToken = $request->get('refresh_token');
-
-        if (empty($refreshToken)) {
-            $this->errorFields['refresh_token'] = ApiCodes::ERR_REQUIRED_PARAM;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-
         /**
-         * @var $jwtEncoder jwtEncoder
+         * @var $userService \App\Service\UserService
          */
-        $jwtEncoder = $this->get('jwt_encoder');
+        $userService = $this->get('user_service');
 
-        if (!$jwtEncoder->validateRefreshToken($refreshToken)) {
-            $this->error = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
+        $validate = $userService->validateRefreshToken($request);
+
+        if ($validate instanceof Response) {
+            return $validate;
         }
 
-        $currentToken = $jwtEncoder->getCleanBearerToken($request);
-
-        /**
-         * @var $userRepository UserRepository
-         */
-        $em = $this->getDoctrine()->getManager();
-        $userRepository = $em->getRepository(User::class);
-
-        $user = $userRepository->loadUserByJwt($currentToken);
-
-        if (empty($user)) {
-            $this->error = ApiCodes::ERR_ACCESS_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-
-        if ($refreshToken != $user->getRefreshToken()) {
-            $this->error = ApiCodes::ERR_REFRESH_TOKEN_INVALID;
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-
-        $token = $jwtEncoder->getJWT(['jti' => $user->getId()]);
-        $refreshToken = $jwtEncoder->generateRefreshToken();
-
-        $user->setAuthKey($token);
-        $user->setRefreshToken($refreshToken);
-
-        $em->persist($user);
-        $em->flush();
-
-        return $this->responseJson([
-            'access_token' => $token,
-            'refresh_token' => $user->getRefreshToken(),
-            'exp' => $jwtEncoder->getPayload($token, 'exp'),
-            'user' => [
-                'id' => $user->getId(),
-                'username' => $user->getUsername()
-            ]
-        ]);
+        return $userService->refreshToken($request);
     }
 
 }
