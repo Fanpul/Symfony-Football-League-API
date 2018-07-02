@@ -35,9 +35,6 @@ class TeamController extends Controller
          */
         $teamService = $this->get('team_service');
 
-        // find data
-//        $teamEntities = $teamService->getPaginationList($request);
-
         try {
             [$teamEntities, $totalCount] = $teamService->getPaginationData($this->requestParams);
 
