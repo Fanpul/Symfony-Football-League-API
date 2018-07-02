@@ -1,6 +1,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    locale: 'en'
+    secretJWT: '%env(APP_SECRET)%'
+    algorithmJWT: 'HS256'
+    tokenExpireDays: 1
+    refreshTokenExpireDays: 30
 
 services:
     # default configuration for services in *this* file
@@ -25,3 +30,27 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    jwt_encoder:
+        class: App\Service\JwtEncoder
+        public: true
+        arguments: ["@service_container"]
+
+    token_authenticator:
+        class: App\Security\TokenAuthenticator
+        arguments: ['@jwt_encoder', '@doctrine.orm.entity_manager']
+
+    form_authenticator:
+        class: App\Security\FormAuthenticator
+        arguments: ['@security.password_encoder']
+
+    get_set_method_normalizer:
+        class: Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer
+        public: false
+        tags: [serializer.normalizer]
+
+    app.action_listener:
+        class: App\EventListener\CorsListener
+        arguments: []
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
