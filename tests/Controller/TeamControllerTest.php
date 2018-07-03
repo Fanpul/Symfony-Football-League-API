@@ -89,7 +89,7 @@ class TeamControllerTest extends TestCase
         $content = json_decode($body, true);
         $header = $response->getHeader('Content-Type');
 
-        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('application/json', array_shift($header));
         $this->assertJson($body);
 
