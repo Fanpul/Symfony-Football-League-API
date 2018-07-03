@@ -13,7 +13,7 @@ class LeagueControllerTest extends TestCase
     {
         $token = $this->authorize();
 
-        $response = $this->client->get('/v1/league',[
+        $response = $this->client->get('/v1/leagues',[
             'headers' => [
                 'Authorization' => sprintf('Bearer %s', $token)
             ]
