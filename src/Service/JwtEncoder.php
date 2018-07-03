@@ -4,7 +4,6 @@ namespace App\Service;
 
 use Firebase\JWT\JWT;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class JwtEncoder
@@ -121,11 +120,10 @@ class JwtEncoder
      * Decode JWT token
      *
      * @param string $token access token to decode
-     * @param bool $exception
      * @throws UnauthorizedHttpException
      * @return array
      */
-    public function decodeJWT(string $token, $exception = true)
+    public function decodeJWT(string $token)
     {
         $secret = $this->getSecretKey();
         $errorText = 'Incorrect token';
@@ -133,14 +131,10 @@ class JwtEncoder
         try {
             $decoded = JWT::decode($token, $secret, [$this->getAlgorithm()]);
         } catch (\Exception $e) {
-
-            if ($exception) {
-                if ($e->getMessage() == 'Expired token') {
-                    $errorText = 'Expired token';
-                }
-                throw new UnauthorizedHttpException('Bearer realm="api"', $errorText);
+            if ($e->getMessage() == 'Expired token') {
+                $errorText = 'Expired token';
             }
-            return null;
+            throw new UnauthorizedHttpException('Bearer realm="api"', $errorText);
         }
 
         return (array)$decoded;
@@ -167,12 +161,11 @@ class JwtEncoder
     /**
      * Return clean Bearer Token
      *
-     * @param Request $request
+     * @param $bearerToken
      * @return null
      */
-    public function getCleanBearerToken(Request $request)
+    public function getCleanBearerToken(string $bearerToken)
     {
-        $bearerToken = $request->headers->get('Authorization');
         if (!empty($bearerToken) && preg_match("/^Bearer\\s+(.*?)$/", $bearerToken, $matches)) {
             return $matches[1] ?? null;
         }

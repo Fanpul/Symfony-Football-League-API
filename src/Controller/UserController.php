@@ -79,7 +79,7 @@ class UserController extends Controller
         }
 
         $params = [
-            'access_token' => $jwtEncoder->getCleanBearerToken($request),
+            'access_token' => $jwtEncoder->getCleanBearerToken($request->headers->get('Authorization')),
             'refresh_token' => $request->get('refresh_token')
         ];
 

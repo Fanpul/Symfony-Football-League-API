@@ -55,7 +55,8 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        $token = $this->jwtEncoder->getCleanBearerToken($request);
+        $bearerToken = $request->headers->get('Authorization');
+        $token = $this->jwtEncoder->getCleanBearerToken($bearerToken);
 
         return ['token' => $token];
     }
