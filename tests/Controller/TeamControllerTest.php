@@ -13,7 +13,7 @@ class TeamControllerTest extends TestCase
     {
         $token = $this->authorize();
 
-        $response = $this->client->get('/v1/team',[
+        $response = $this->client->get('/v1/teams',[
             'headers' => [
                 'Authorization' => sprintf('Bearer %s', $token)
             ],
@@ -45,7 +45,7 @@ class TeamControllerTest extends TestCase
             'league_id' => 0,
         ];
 
-        $response = $this->client->post('/v1/team',[
+        $response = $this->client->post('/v1/teams',[
             'headers' => [
                 'Authorization' => sprintf('Bearer %s', $token)
             ],
@@ -78,7 +78,7 @@ class TeamControllerTest extends TestCase
             'league_id' => 0,
         ];
 
-        $response = $this->client->put('/v1/team/0',[
+        $response = $this->client->put('/v1/teams/0',[
             'headers' => [
                 'Authorization' => sprintf('Bearer %s', $token)
             ],
