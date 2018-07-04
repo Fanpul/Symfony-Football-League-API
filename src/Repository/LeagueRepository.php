@@ -19,16 +19,4 @@ class LeagueRepository extends ServiceEntityRepository
         parent::__construct($registry, League::class);
     }
 
-    /**
-     * Returns count
-     * @return mixed
-     */
-    public function findCount()
-    {
-        return $this->createQueryBuilder('l')
-                ->select('count(l.id)')
-                ->getQuery()
-                ->getSingleScalarResult()
-            ;
-    }
 }

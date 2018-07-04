@@ -37,7 +37,7 @@ class LeagueService
         }
 
         // find total count
-        $totalCount = $leagueRepository->findCount();
+        $totalCount = $leagueRepository->count([]);
 
         return [$leagueEntities, $totalCount];
     }
