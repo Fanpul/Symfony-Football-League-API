@@ -48,4 +48,9 @@ class ApiCodes
     {
         return self::$errorMessages[$errorCode] ?? '';
     }
+
+    public static function getMessage($errorCode)
+    {
+        return self::$errorMessages[$errorCode] ?? '';
+    }
 }

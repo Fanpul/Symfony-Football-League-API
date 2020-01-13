@@ -2,7 +2,7 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^7.0.8",
+        "php": ">=7.3",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "firebase/php-jwt": "^5.0",

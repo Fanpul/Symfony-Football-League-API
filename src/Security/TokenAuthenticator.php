@@ -8,6 +8,7 @@ use App\Repository\UserRepository;
 use App\Service\ApiCodes;
 use App\Service\JwtEncoder;
 use Doctrine\ORM\EntityManager;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -121,8 +122,14 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        $this->error = ApiCodes::ERR_ACCESS_TOKEN_INVALID;
-        return $this->responseJson([], Response::HTTP_FORBIDDEN);
+        $message = ApiCodes::getMessage(ApiCodes::ERR_ACCESS_TOKEN_INVALID);
+        $data = [
+            'code' => Response::HTTP_FORBIDDEN,
+            'message' => $message,
+            'errors' => []
+        ];
+
+        return new JsonResponse($data, Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -130,8 +137,14 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $this->error = ApiCodes::ERR_UNAUTHORIZED;
-        return $this->responseJson([], Response::HTTP_UNAUTHORIZED);
+        $message = ApiCodes::getMessage(ApiCodes::ERR_UNAUTHORIZED);
+        $data = [
+            'code' => Response::HTTP_UNAUTHORIZED,
+            'message' => $message,
+            'errors' => []
+        ];
+
+        return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
     }
 
     /**

@@ -78,3 +78,71 @@ services:
     validation.team_service:
         class: App\Service\Validation\TeamValidation
         public: true
+
+    # Service
+
+    App\Service\Search\TeamSearchEngine:
+        arguments: ['@App\Repository\TeamRepository']
+        calls:
+#            - [addQueryPart, ['@App\Service\Search\Filters\Limit']]
+#            - [addQueryPart, ['@App\Service\Search\Filters\Offset']]
+            - [addQueryPart, ['@App\Service\Search\Filters\League']]
+
+    App\Service\Search\LeagueSearchEngine:
+        arguments: ['@App\Repository\LeagueRepository']
+        calls:
+#            - [addQueryPart, ['@App\Service\Search\Filters\Limit']]
+#            - [addQueryPart, ['@App\Service\Search\Filters\Offset']]
+        - [addQueryPart, ['@App\Service\Search\Filters\League\Name']]
+
+    Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer:
+        arguments:
+            - '@serializer.mapping.class_metadata_factory'
+            - '@serializer.name_converter.camel_case_to_snake_case'
+#            - '@property_info.reflection_extractor'
+#            - '@serializer.mapping.class_discriminator_resolver'
+        tags:
+            - { name: serializer.normalizer, priority: -995 }
+
+    # ParamConverter
+
+    App\ParamConverter\RequestQueryModelParamConverter:
+        arguments: ['@Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer']
+        tags:
+            - { name: request.param_converter }
+
+    App\ParamConverter\InputModelParamConverter:
+        arguments: ['@serializer', '@validator']
+        tags:
+            - { name: request.param_converter }
+
+    # EventListener
+
+    App\EventListener\KernelExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    App\EventListener\EntityValidationExceptionListener:
+        tags:
+        - { name: kernel.event_listener, event: kernel.exception, priority: 16 }
+
+    # Factory
+
+    app.factory.paginated_result.team:
+        class: App\Factory\PaginatedResultFactory
+        arguments: ['@App\DataTransformer\TeamTransformer']
+
+    app.factory.paginated_result.league:
+        class: App\Factory\PaginatedResultFactory
+        arguments: ['@App\DataTransformer\LeagueTransformer']
+
+
+    # Manager
+
+    App\Manager\TeamManager:
+        tags:
+            - { name: 'container.service_subscriber', id: 'app.factory.paginated_result.team' }
+
+    App\Manager\LeagueManager:
+        tags:
+            - { name: 'container.service_subscriber', id: 'app.factory.paginated_result.league' }

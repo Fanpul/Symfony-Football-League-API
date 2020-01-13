@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Controller\Traits\ApiResponseTrait;
 use App\Entity\User;
 use App\Exception\ApiException;
+use App\Manager\UserManager;
+use App\Model\Input\RefreshTokenInput;
+use App\Service\UserService;
 use App\Service\Validation\UserValidation;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,89 +19,46 @@ class UserController extends Controller
 {
     use ApiResponseTrait;
 
+    private $service;
+
+    public function __construct(UserService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
-     * @Route("/v1/login", name="v1_user_login")
-     * @Method("POST")
+     * @Route("/v1/login", name="v1_user_login", methods={"POST"})
      *
-     * @param Request $request
      * @return JsonResponse
      */
-    public function loginAction(Request $request)
+    public function loginAction()
     {
-        /**
-         * @var $user User
-         */
-        $user = $this->getUser();
+//        /**@var $userService \App\Service\UserService */
+//        $userService = $this->container->get('user_service');
 
-        /**
-         * @var $userService \App\Service\UserService
-         * @var $jwtEncoder \App\Service\JwtEncoder
-         */
-        $userService = $this->get('user_service');
-        $jwtEncoder = $this->get('jwt_encoder');
-
-        [$token, $refreshToken] = $userService->login($user);
+        [$token, $refreshToken] = $this->service->getJWT($this->getUser());
 
         return $this->responseJson([
             'access_token' => $token,
             'refresh_token' => $refreshToken,
-            'exp' => $jwtEncoder->getPayload($token, 'exp'),
-            'user' => [
-                'id' => $user->getId(),
-                'username' => $user->getUsername()
-            ]
         ]);
     }
 
     /**
-     * @Route("/v1/refresh-token", name="v1_user_refresh_login")
-     * @Method("POST")
+     * @Route("/v1/refresh-token", name="v1_user_refresh_login", methods={"POST"})
      *
-     * @param Request $request
+     * @param RefreshTokenInput $input
      * @return JsonResponse
+     * @throws ApiException
      */
-    public function refreshTokenAction(Request $request)
+    public function refreshTokenAction(RefreshTokenInput $input)
     {
-        /**
-         * @var $userService \App\Service\UserService
-         * @var $jwtEncoder \App\Service\JwtEncoder
-         */
-        $userService = $this->get('user_service');
-        $jwtEncoder = $this->get('jwt_encoder');
+        [$token, $refreshToken] = $this->service->refreshToken($input);
 
-        /**
-         * @var $validation UserValidation
-         */
-        $validation = $this->get('validation.user_service');
-
-        // validate fields
-        if (!$validation->validateRefreshToken($request)) {
-            $this->errorFields = $validation->getErrorFields();
-            return $this->responseJson([], Response::HTTP_BAD_REQUEST);
-        }
-
-        $params = [
-            'access_token' => $jwtEncoder->getCleanBearerToken($request->headers->get('Authorization')),
-            'refresh_token' => $request->get('refresh_token')
-        ];
-
-        try {
-            /** @var $user User */
-            [$user, $token, $refreshToken] = $userService->refreshToken($params);
-
-            return $this->responseJson([
-                'access_token' => $token,
-                'refresh_token' => $refreshToken,
-                'exp' => $jwtEncoder->getPayload($token, 'exp'),
-                'user' => [
-                    'id' => $user->getId(),
-                    'username' => $user->getUsername()
-                ]
-            ]);
-        } catch (ApiException $e) {
-            $this->error = $e->getMessage();
-            return $this->responseJson([], $e->getCode());
-        }
+        return $this->responseJson([
+            'access_token' => $token,
+            'refresh_token' => $refreshToken,
+        ]);
     }
 
 }

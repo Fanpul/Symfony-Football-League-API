@@ -3,15 +3,19 @@
 namespace App\Security;
 
 use App\Controller\Traits\ApiResponseTrait;
+use App\Model\Input\LoginInput;
 use App\Service\ApiCodes;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * Class GuardAuthenticator
@@ -22,10 +26,12 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
     use ApiResponseTrait;
 
     private $passwordEncoder;
+    private $serializer;
 
-    public function __construct(UserPasswordEncoder $passwordEncoder)
+    public function __construct(UserPasswordEncoder $passwordEncoder, SerializerInterface $serializer)
     {
         $this->passwordEncoder = $passwordEncoder;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -46,10 +52,24 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        return [
-            'username' => $request->get('username'),
-            'password' => $request->get('password'),
-        ];
+        $object = $this->serializer->deserialize(
+            $request->getContent(),
+            LoginInput::class,
+            $request->getContentType(),
+            []
+        );
+
+        return $object;
+
+//        return [
+//            'username' => $object->getLogin(),
+//            'password' => $object->getPassword(),
+//        ];
+//
+//        return [
+//            'username' => $request->get('username'),
+//            'password' => $request->get('password'),
+//        ];
     }
 
     /**
@@ -59,7 +79,14 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
      */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $username = $credentials['username'] ?? null;
+//        echo '<pre>';
+//        print_r($credentials);
+//        echo '</pre>';
+//        exit;
+
+        $username = $credentials->getLogin();
+
+//        $username = $credentials['username'] ?? null;
 
         if (empty($username)) {
             return null;
@@ -76,7 +103,13 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
      */
     public function checkCredentials($credentials, UserInterface $user)
     {
-        $passwordPlain = $credentials['password'] ?? null;
+//        echo '<pre>';
+//        print_r($credentials);
+//        echo '</pre>';
+//        exit;
+
+//        $passwordPlain = $credentials['password'] ?? null;
+        $passwordPlain = $credentials->getPassword();
 
         if (empty($passwordPlain)) {
             return false;
@@ -110,8 +143,14 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        $this->error = ApiCodes::ERR_INVALID_CREDENTIALS;
-        return $this->responseJson([], Response::HTTP_FORBIDDEN);
+        // $message = ApiCodes::getMessage(ApiCodes::ERR_INVALID_CREDENTIALS);
+        $data = [
+            'code' => Response::HTTP_FORBIDDEN,
+            'message' => $exception->getMessageKey(),
+            'errors' => []
+        ];
+
+        return new JsonResponse($data, Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -122,8 +161,14 @@ class GuardAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $this->error = ApiCodes::ERR_UNAUTHORIZED;
-        return $this->responseJson([], Response::HTTP_UNAUTHORIZED);
+        $message = ApiCodes::getMessage(ApiCodes::ERR_UNAUTHORIZED);
+        $data = [
+            'code' => Response::HTTP_UNAUTHORIZED,
+            'message' => $message,
+            'errors' => []
+        ];
+
+        return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
     }
 
     /**

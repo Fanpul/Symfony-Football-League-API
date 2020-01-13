@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Exception\ApiException;
+use App\Model\Input\RefreshTokenInput;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +24,7 @@ class UserService
      * @param User $user
      * @return array
      */
-    public function login(User $user)
+    public function getJWT(User $user)
     {
         $token = $this->jwtEncoder->getJWT(['jti' => $user->getId()]);
         $refreshToken = $this->jwtEncoder->generateRefreshToken();
@@ -38,27 +39,26 @@ class UserService
     }
 
     /**
-     * @param $params
+     * @param RefreshTokenInput $input
      * @return array
      * @throws ApiException
      */
-    public function refreshToken($params)
+    public function refreshToken(RefreshTokenInput $input)
     {
-        $refreshToken = $params['refresh_token'] ?? null;
-        $currentToken = $params['access_token'] ?? null;
-
         /**
          * @var $userRepository UserRepository
          */
         $userRepository = $this->em->getRepository(User::class);
 
-        $user = $userRepository->loadUserByJwt($currentToken);
+        $user = $userRepository->loadUserByJwt($input->getToken());
         if (empty($user)) {
-            throw new ApiException(ApiCodes::ERR_ACCESS_TOKEN_INVALID, Response::HTTP_BAD_REQUEST);
+            $message = ApiCodes::getMessage(ApiCodes::ERR_ACCESS_TOKEN_INVALID);
+            throw new ApiException($message, Response::HTTP_BAD_REQUEST);
         }
 
-        if ($refreshToken != $user->getRefreshToken()) {
-            throw new ApiException(ApiCodes::ERR_REFRESH_TOKEN_INVALID, Response::HTTP_BAD_REQUEST);
+        if ($input->getRefreshToken() != $user->getRefreshToken()) {
+            $message = ApiCodes::getMessage(ApiCodes::ERR_REFRESH_TOKEN_INVALID);
+            throw new ApiException($message, Response::HTTP_BAD_REQUEST);
         }
 
         $token = $this->jwtEncoder->getJWT(['jti' => $user->getId()]);
@@ -70,7 +70,7 @@ class UserService
         $this->em->persist($user);
         $this->em->flush();
 
-        return [$user, $token, $refreshToken];
+        return [$token, $refreshToken];
     }
 
 }
